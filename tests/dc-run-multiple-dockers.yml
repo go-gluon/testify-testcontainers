@@ -1,0 +1,62 @@
+version: '2.4'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:10.5
+    environment:
+      POSTGRES_DB: "db"
+      POSTGRES_USER: "db"
+      POSTGRES_PASSWORD: "db"
+    labels:
+      - "test.priority=90"
+      - "test.wait.log.value=database system is ready to accept connections"
+      - "test.wait.log.times=2"
+      - "test.log=true"
+      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://{{host:tkit-quarkus-example-jpa-db}}:{{port:tkit-quarkus-example-jpa-db:5432}}/db?sslmode=disable"
+    ports:
+      - "5432:5432"
+    networks:
+      - test
+  mocking-server:
+    container_name: mocking-server
+    image: rodolpheche/wiremock:2.26.3-alpine
+    labels:
+      - "test.priority=100"
+      - "test.log=true"
+      - "test.wait.port.value=8080"
+    volumes:
+    - ./wiremock:/home/wiremock
+    ports:
+      - "9000:8080"
+    networks:
+      - test
+  mocking-server1:
+    container_name: mocking-server
+    image: rodolpheche/wiremock:2.26.3-alpine
+    labels:
+      - "test.priority=100"
+      - "test.log=true"
+      - "test.wait.log.value=verbose:"
+      - "test.wait.log.times=1"
+    volumes:
+    - ./wiremock:/home/wiremock
+    ports:
+      - "9001:8080"
+    networks:
+      - test
+  mocking-server2:
+    container_name: mocking-server
+    image: rodolpheche/wiremock:2.26.3-alpine
+    labels:
+      - "test.priority=100"
+      - "test.log=true"
+      - "test.wait.log.value=verbose:"
+      - "test.wait.log.times=1"
+    volumes:
+    - ./wiremock:/home/wiremock
+    ports:
+      - "9002:8080"
+    networks:
+      - test      
+networks:
+  test:

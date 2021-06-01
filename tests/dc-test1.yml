@@ -1,0 +1,53 @@
+version: '2.4'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:10.5
+    environment:
+      POSTGRES_DB: "db"
+      POSTGRES_USER: "db"
+      POSTGRES_PASSWORD: "db"
+    labels:
+      - "test.priority=90"
+      - "test.Wait.log.value=database system is ready to accept connections"
+      - "test.Wait.log.times=2"
+      - "test.log=true"
+      - "test.property.quarkus.datasource.jdbc.url=jdbc:postgresql://{{host:tkit-quarkus-example-jpa-db}}:{{port:tkit-quarkus-example-jpa-db:5432}}/db?sslmode=disable"
+    ports:
+      - "5432:5432"
+    networks:
+      - test
+  import:
+    container_name: import
+    image: import:master
+    environment:
+      DB_URL: "jdbc:postgresql://postgres:5432/db?sslmode=disable"
+      DB_USERNAME: "db"
+      DB_PASSWORD: "db"
+    ports:
+      - "8081:8080"
+    labels:
+      - "test.priority=100"
+      - "test.Wait.forLogMessage.regex=.*Installed features:.*"
+      - "test.Wait.forLogMessage.times=1"
+      - "test.log=true"
+      - "test.property.import.url=$${url:dbimport:8080}"
+    networks:
+      - test
+  mocking-server:
+    container_name: mocking-server
+    image: rodolpheche/wiremock:2.26.3-alpine
+    labels:
+      - "test.priority=100"
+      - "test.log=true"
+      - "test.Wait.log.value=verbose:"
+      - "test.Wait.log.times=1"
+      - "test.property.emailServerUrl=http://{{host:mocking-server}}:{{port:mocking-server:8080}}"
+    volumes:
+    - ./wiremock:/home/wiremock
+    ports:
+      - "9000:8080"
+    networks:
+      - test
+networks:
+  test:
